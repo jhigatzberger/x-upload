@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify
 import tweepy
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
+import base64
 
 # Load environment variables
 load_dotenv()
@@ -37,45 +38,52 @@ def allowed_file(filename):
     """Check if file extension is allowed."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 @app.route('/create', methods=['POST'])
 def create_post():
     if not check_api_key():
         return jsonify({"error": "Unauthorized: Invalid API Key"}), 401
 
-    # Ensure the request is multipart/form-data
-    if not request.content_type.startswith("multipart/form-data"):
-        return jsonify({"error": "Invalid content type, must be multipart/form-data"}), 400
+    print("Headers:", request.headers)
+    print("Content-Type:", request.content_type)
+    print("Form Data:", request.form)
+    print("Files Data:", request.files)
 
-    # Check if file and text are present
-    if "file" not in request.form or "text" not in request.form:
-        return jsonify({"error": "Missing file or text"}), 400
+    if "text" not in request.form:
+        return jsonify({"error": "Missing text"}), 400
 
-    file = request.form["file"]
     text = request.form["text"]
 
-    # Ensure a file was uploaded
-    if file.filename == "":
-        return jsonify({"error": "No selected file"}), 400
+    # **Case 1: File was correctly uploaded**
+    if "file" in request.files:
+        file = request.files["file"]
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
 
-    # Validate file type
-    if not allowed_file(file.filename):
-        return jsonify({"error": "File type not allowed"}), 400
+    # **Case 2: File is coming as a Base64 string**
+    elif "file" in request.form:
+        try:
+            file_data = request.form["file"]
+            file_bytes = base64.b64decode(file_data)  # Decode Base64
+            filename = "uploaded_image.jpg"
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            
+            with open(file_path, "wb") as f:
+                f.write(file_bytes)  # Save as binary file
+            
+            print("File successfully decoded and saved")
+        except Exception as e:
+            return jsonify({"error": "Invalid file format"}), 400
 
-    # Secure filename and save to uploads directory
-    filename = secure_filename(file.filename)
-    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    file.save(file_path)
+    else:
+        return jsonify({"error": "Missing file"}), 400
 
+    # Upload to Twitter
     try:
-        # Upload media to Twitter
         media = api.media_upload(filename=file_path)
-
-        # Create tweet with media
         tweet = api.update_status(status=text, media_ids=[media.media_id])
-
-        # Remove uploaded file after posting
-        os.remove(file_path)
-
+        os.remove(file_path)  # Cleanup
         return jsonify({"message": "Tweet posted successfully", "tweet_id": tweet.id_str})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
