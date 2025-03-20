@@ -46,16 +46,11 @@ def create_post():
     if not request.content_type.startswith("multipart/form-data"):
         return jsonify({"error": "Invalid content type, must be multipart/form-data"}), 400
 
-    # Debugging: Print received request data
-    print("Received headers:", request.headers)
-    print("Received form data:", request.form)
-    print("Received files:", request.files)
-
     # Check if file and text are present
-    if "file" not in request.files or "text" not in request.form:
+    if "file" not in request.form or "text" not in request.form:
         return jsonify({"error": "Missing file or text"}), 400
 
-    file = request.files["file"]
+    file = request.form["file"]
     text = request.form["text"]
 
     # Ensure a file was uploaded
