@@ -38,8 +38,11 @@ def create_post():
     if not check_api_key():
         return jsonify({"error": "Unauthorized: Invalid API Key"}), 401
 
-    if 'file' not in request.files or 'text' not in request.form:
-        return jsonify({"error": "Missing file or text"}), 400
+    if 'file' not in request.files:
+        return jsonify({"error": "Missing file"}), 400
+    
+    if 'text' not in request.form:
+        return jsonify({"error": "Missing text"}), 400
 
     file = request.files['file']
     text = request.form['text']
