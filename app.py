@@ -74,7 +74,7 @@ def create_post():
             print("Binary file successfully extracted and saved")
 
         except Exception as e:
-            return jsonify({"error": "Invalid file format"}), 400
+            return jsonify({"error": jsonify(e)}), 400
 
     else:
         return jsonify({"error": "Missing file"}), 400
