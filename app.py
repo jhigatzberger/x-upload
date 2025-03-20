@@ -18,12 +18,24 @@ auth = tweepy.OAuth1UserHandler(
 )
 
 api = tweepy.API(auth)
+API_KEY = os.getenv("API_KEY")  # Load API Key from .env
+
+def check_api_key():
+    """Validate API key in the request headers."""
+    request_api_key = request.headers.get("X-API-KEY")
+    if request_api_key != API_KEY:
+        return False
+    return True
 
 @app.route('/create', methods=['POST'])
 def create_post():
+    # API key validation
+    if not check_api_key():
+        return jsonify({"error": "Unauthorized: Invalid API Key"}), 401
+
     if 'file' not in request.files or 'text' not in request.form:
         return jsonify({"error": "Missing file or text"}), 400
-    
+
     file = request.files['file']
     text = request.form['text']
 
