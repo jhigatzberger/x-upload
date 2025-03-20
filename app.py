@@ -38,7 +38,6 @@ def allowed_file(filename):
     """Check if file extension is allowed."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
 @app.route('/create', methods=['POST'])
 def create_post():
     if not check_api_key():
@@ -53,26 +52,27 @@ def create_post():
         return jsonify({"error": "Missing text"}), 400
 
     text = request.form["text"]
+    file_path = None
 
-    # **Case 1: File was correctly uploaded**
+    # **Case 1: File was correctly uploaded using multipart/form-data**
     if "file" in request.files:
         file = request.files["file"]
         filename = secure_filename(file.filename)
         file_path = os.path.join(UPLOAD_FOLDER, filename)
         file.save(file_path)
 
-    # **Case 2: File is coming as a Base64 string**
+    # **Case 2: File is coming as a binary string in the form field**
     elif "file" in request.form:
         try:
-            file_data = request.form["file"]
-            file_bytes = base64.b64decode(file_data)  # Decode Base64
+            binary_data = request.form["file"].encode("latin1")  # Convert string to bytes
             filename = "uploaded_image.jpg"
             file_path = os.path.join(UPLOAD_FOLDER, filename)
-            
+
             with open(file_path, "wb") as f:
-                f.write(file_bytes)  # Save as binary file
+                f.write(binary_data)  # Save as binary file
             
-            print("File successfully decoded and saved")
+            print("Binary file successfully extracted and saved")
+
         except Exception as e:
             return jsonify({"error": "Invalid file format"}), 400
 
