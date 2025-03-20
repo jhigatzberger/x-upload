@@ -28,12 +28,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 1) We run the official setup command from Crawl4AI
-RUN crawl4ai-setup
-
-# 2) (Optional) Also install the chromium dependencies via playwright
-RUN python -m playwright install --with-deps chromium
-
 # Copy your Flask app
 COPY . .
 
