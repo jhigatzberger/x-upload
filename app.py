@@ -43,41 +43,39 @@ def create_post():
     if not check_api_key():
         return jsonify({"error": "Unauthorized: Invalid API Key"}), 401
 
-    print("Headers:", request.headers)
-    print("Content-Type:", request.content_type)
-    print("Form Data:", request.form)
-    print("Files Data:", request.files)
+    data = request.get_json(silent=True)
 
-    if "text" not in request.form:
+    if not data:
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+
+    # Extract values from JSON
+    text = data.get("text")
+    base64_string = data.get("file")  # Base64-encoded image string
+
+    if not text:
         return jsonify({"error": "Missing text"}), 400
 
-    text = request.form["text"]
-    file_path = None
-
-    # **Case 1: File was correctly uploaded using multipart/form-data**
-    if "file" in request.files:
-        file = request.files["file"]
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(file_path)
-
-    # **Case 2: File is coming as a binary string in the form field**
-    elif "file" in request.form:
-        try:
-            binary_data = request.form["file"].encode("latin1")  # Convert string to bytes
-            filename = "uploaded_image.jpg"
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
-
-            with open(file_path, "wb") as f:
-                f.write(binary_data)  # Save as binary file
-            
-            print("Binary file successfully extracted and saved")
-
-        except Exception as e:
-            return jsonify({"error": str(e)}), 400
-
-    else:
+    if not base64_string:
         return jsonify({"error": "Missing file"}), 400
+
+    # Validate and decode Base64 string
+    if not is_valid_base64(base64_string):
+        return jsonify({"error": "Invalid Base64 string"}), 400
+
+    try:
+        binary_data = base64.b64decode(base64_string)
+
+        # Save binary data as an image file
+        filename = "uploaded_image.jpg"
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+        with open(file_path, "wb") as f:
+            f.write(binary_data)
+
+        print("Base64 file successfully decoded and saved")
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
     # Upload to Twitter
     try:
@@ -87,6 +85,14 @@ def create_post():
         return jsonify({"message": "Tweet posted successfully", "tweet_id": tweet.id_str})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+def is_valid_base64(base64_string):
+    """Check if a given string is valid Base64."""
+    try:
+        base64.b64decode(base64_string, validate=True)
+        return True
+    except Exception:
+        return False
 
 @app.route('/health', methods=['GET'])
 def health_check():
