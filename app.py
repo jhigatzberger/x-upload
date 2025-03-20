@@ -27,6 +27,11 @@ def check_api_key():
         return False
     return True
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({"status": "healthy"}), 200
+
 @app.route('/create', methods=['POST'])
 def create_post():
     # API key validation
