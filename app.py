@@ -19,6 +19,8 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 # Ensure upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+bearer_token = os.getenv("BEARER_TOKEN")
+
 # Twitter API authentication
 auth = tweepy.OAuth1UserHandler(
     os.getenv("CONSUMER_KEY"),
@@ -27,7 +29,7 @@ auth = tweepy.OAuth1UserHandler(
     os.getenv("ACCESS_TOKEN_SECRET")
 )
 api = tweepy.API(auth)
-client = tweepy.Client(auth)
+client = tweepy.Client(bearer_token)
 API_KEY = os.getenv("API_KEY")  # Load API Key from .env
 
 def check_api_key():
