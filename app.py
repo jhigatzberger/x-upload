@@ -83,7 +83,7 @@ def create_post():
     try:
         media = api.media_upload(filename=file_path)
         os.remove(file_path)  # Cleanup
-        return jsonify({"message": "Media uploaded successfully", "media_id": media.media_id})
+        return jsonify({"message": "Media uploaded successfully", "media_id": str(media.media_id)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
