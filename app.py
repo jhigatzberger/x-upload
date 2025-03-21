@@ -51,11 +51,7 @@ def create_post():
         return jsonify({"error": "Invalid or missing JSON body"}), 400
 
     # Extract values from JSON
-    text = data.get("text")
     base64_string = data.get("file")  # Base64-encoded image string
-
-    if not text:
-        return jsonify({"error": "Missing text"}), 400
 
     if not base64_string:
         return jsonify({"error": "Missing file"}), 400
