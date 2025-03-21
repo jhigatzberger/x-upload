@@ -29,7 +29,6 @@ auth = tweepy.OAuth1UserHandler(
     os.getenv("ACCESS_TOKEN_SECRET")
 )
 api = tweepy.API(auth)
-client = tweepy.Client(bearer_token)
 API_KEY = os.getenv("API_KEY")  # Load API Key from .env
 
 def check_api_key():
@@ -83,10 +82,8 @@ def create_post():
     # Upload to Twitter
     try:
         media = api.media_upload(filename=file_path)
-        tweet = client.create_tweet(text=text, media_ids=[media.media_id])
         os.remove(file_path)  # Cleanup
-        return jsonify({"message": "Tweet posted successfully", "tweet_id": tweet.id_str})
-        #return jsonify({"message": "Media uploaded successfully", "media_id": media.media_id})
+        return jsonify({"message": "Media uploaded successfully", "media_id": media.media_id})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
